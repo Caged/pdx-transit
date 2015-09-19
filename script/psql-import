@@ -1,0 +1,16 @@
+#!/bin/bash
+
+#!/bin/bash
+
+: ${db_name:=pdx_transit}
+
+make
+
+dropdb --if-exists --interactive $db_name
+createdb --encoding='utf-8' --template=template0 $db_name
+psql -c 'create extension postgis' $db_name
+
+for shp in data/shp/*.shp; do
+  table_name=`echo $(basename $shp) | sed 's/trimet-//g;s/-/_/g;s/.shp//'`
+  shp2pgsql -s 4326 -t 2D -I -D $shp $table_name | psql $db_name
+done
